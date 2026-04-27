@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>COSMONDE Space Planner</title>
+    <!-- โหลด Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลด React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- โหลด Babel สำหรับคอมไพล์ JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body { margin: 0; padding: 0; overflow-x: hidden; touch-action: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect, useLayoutEffect } = React;
+
+        // --- Constants & Config ---
+        const PIXELS_PER_METER = 40;
+
+        const BED_TYPES = {
+            FRONT: { id: 'front', w: 1.1, h: 2.2, beds: 2, color: 'bg-blue-600', borderColor: 'border-blue-800' },
+            SIDE: { id: 'side', w: 2.2, h: 1.1, beds: 2, color: 'bg-teal-600', borderColor: 'border-teal-800' }
+        };
+
+        const DICT = {
+            th: {
+                title: 'โปรแกรมจำลองพื้นที่', s1: '1. ขนาดพื้นที่ (Area Size)', inputTypeDims: 'กว้าง x ยาว', inputTypeArea: 'ขนาดพื้นที่ (ตร.ม.)', w: 'ความกว้าง (W) / m', l: 'ความยาว (L) / m', areaInput: 'พื้นที่รวม (sq.m)', areaHelp: '* ระบบจำลองห้องในสัดส่วนสี่เหลี่ยมจัตุรัส', s2: '2. โหมดการจัดวาง', modeAuto: 'อัตโนมัติ (Auto)', modeManual: 'วางเอง (Manual)', selectAuto: 'เลือกรุ่นเพื่อจัดวางอัตโนมัติ', addBed: 'กดเพื่อเพิ่มลงในแปลน', summary: 'สรุปการจัดพื้นที่', totalArea: 'พื้นที่รวม', sqm: 'ตร.ม.', estimate: 'ประเมินสูงสุด', beds: 'เตียง', placed: 'จำนวนในแปลน', capsules: 'แคปซูล', clear: 'ล้างพื้นที่ทั้งหมด', helpAuto: 'ระบบกำลังจัดวางให้อัตโนมัติ (ลากเตียงเพื่อสลับเป็นโหมดวางเอง)', helpManual: 'เลือกรุ่นแคปซูลด้านซ้าย แล้วลากจัดวางได้เลย', frontLabel: 'Front Entry (เข้าด้านหน้า)', sideLabel: 'Side Entry (เข้าด้านข้าง)', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'ต้องการล้างแคปซูลทั้งหมดในห้องใช่หรือไม่?'
+            },
+            en: {
+                title: 'Space Planner Tool', s1: '1. Room Size', inputTypeDims: 'Width x Length', inputTypeArea: 'Total Area (sq.m)', w: 'Width (W) / m', l: 'Length (L) / m', areaInput: 'Total Area (sq.m)', areaHelp: '* Simulated as a square layout', s2: '2. Layout Mode', modeAuto: 'Auto Fill', modeManual: 'Manual', selectAuto: 'Select a type to auto-fill', addBed: 'Click to add to plan', summary: 'Summary Report', totalArea: 'Total Area', sqm: 'sq.m', estimate: 'Max Estimate', beds: 'beds', placed: 'Placed in Plan', capsules: 'capsules', clear: 'Clear All', helpAuto: 'Auto-layout active (Drag any bed to switch to manual mode)', helpManual: 'Select a capsule type and drag to arrange', frontLabel: 'Front Entry', sideLabel: 'Side Entry', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'Clear all capsules from the room?'
+            },
+            jp: {
+                title: 'スペースシミュレーター', s1: '1. 部屋のサイズ', inputTypeDims: '幅 × 長さ', inputTypeArea: '面積 (㎡)', w: '幅 (W) / m', l: '長さ (L) / m', areaInput: '合計面積 (㎡)', areaHelp: '* 正方形のレイアウトとしてシミュレーション', s2: '2. レイアウトモード', modeAuto: '自動 (Auto)', modeManual: '手動 (Manual)', selectAuto: 'タイプを選択して自動配置', addBed: 'クリックしてプランに追加', summary: '概要レポート', totalArea: '合計面積', sqm: '㎡', estimate: '最大推定', beds: 'ベッド', placed: '配置済み', capsules: 'カプセル', clear: 'すべてクリア', helpAuto: '自動配置中 (ベッドを動かすと手動モードになります)', helpManual: '左から選んでドラッグしてください', frontLabel: 'フロントエントリー (前入り)', sideLabel: 'サイドエントリー (横入り)', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'すべてのカプセルをクリアしますか？'
+            }
+        };
+
+        function App() {
+            const [lang, setLang] = useState('th');
+            const t = DICT[lang];
+
+            const [inputMode, setInputMode] = useState('DIMS');
+            const [roomWidth, setRoomWidth] = useState(5);
+            const [roomLength, setRoomLength] = useState(8);
+            const [roomArea, setRoomArea] = useState(40);
+            const [placedBeds, setPlacedBeds] = useState([]);
+            const [isAuto, setIsAuto] = useState(false);
+            const [autoType, setAutoType] = useState('FRONT');
+
+            const [draggingId, setDraggingId] = useState(null);
+            const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
+            const roomRef = useRef(null);
+            
+            const containerRef = useRef(null);
+            const [scale, setScale] = useState(1);
+
+            const currentTotalArea = inputMode === 'DIMS' ? roomWidth * roomLength : roomArea;
+            const estimatedMax = Math.floor(currentTotalArea / 2);
+            const currentBeds = placedBeds.reduce((sum, bed) => sum + BED_TYPES[bed.type].beds, 0);
+
+            const calculateScale = () => {
+                if (!containerRef.current || !roomRef.current) return;
+                const containerRect = containerRef.current.getBoundingClientRect();
+                const availableWidth = containerRect.width - 40;
+                const availableHeight = containerRect.height - 40;
+                const requiredWidth = roomWidth * PIXELS_PER_METER;
+                const requiredHeight = roomLength * PIXELS_PER_METER;
+                const scaleX = availableWidth / requiredWidth;
+                const scaleY = availableHeight / requiredHeight;
+                const newScale = Math.min(scaleX, scaleY, 1);
+                setScale(Math.max(0.1, newScale * 0.95)); 
+            };
+
+            useLayoutEffect(() => {
+                calculateScale();
+                window.addEventListener('resize', calculateScale);
+                return () => window.removeEventListener('resize', calculateScale);
+            }, [roomWidth, roomLength]);
+
+            const handleWidthChange = (val) => {
+                const w = Math.max(2, parseFloat(val) || 0);
+                setRoomWidth(w);
+                if(inputMode === 'DIMS') setRoomArea(w * roomLength);
+            };
+            const handleLengthChange = (val) => {
+                const l = Math.max(2, parseFloat(val) || 0);
+                setRoomLength(l);
+                if(inputMode === 'DIMS') setRoomArea(roomWidth * l);
+            };
+            const handleAreaChange = (val) => {
+                const a = Math.max(4, parseFloat(val) || 0);
+                setRoomArea(a);
+                const side = parseFloat(Math.sqrt(a).toFixed(2));
+                setRoomWidth(side);
+                setRoomLength(side);
+            };
+            const handleInputModeChange = (mode) => {
+                setInputMode(mode);
+                if (mode === 'AREA') {
+                    const a = roomWidth * roomLength;
+                    setRoomArea(parseFloat(a.toFixed(2)));
+                }
+            };
+
+            const generateAutoLayout = (w, l, typeKey) => {
+                const type = BED_TYPES[typeKey];
+                const bw = type.w;
+                const bh = type.h;
+                const beds = [];
+                let count = 0;
+
+                if (typeKey === 'FRONT') {
+                    let currentY = 0.2; 
+                    while (currentY + bh <= l) {
+                        let currentX = 0.2;
+                        while (currentX + bw <= w) {
+                            beds.push({ id: `auto-${count++}`, type: typeKey, x: currentX * PIXELS_PER_METER, y: currentY * PIXELS_PER_METER });
+                            currentX += bw;
+                        }
+                        currentY += bh + 1.2; 
+                    }
+                } else {
+                    let currentX = 0.2;
+                    while (currentX + bw <= w) {
+                        let currentY = 0.2;
+                        while (currentY + bh <= l) {
+                            beds.push({ id: `auto-${count++}`, type: typeKey, x: currentX * PIXELS_PER_METER, y: currentY * PIXELS_PER_METER });
+                            currentY += bh;
+                        }
+                        currentX += bw + 1.2;
+                    }
+                }
+                return beds;
+            };
+
+            useEffect(() => {
+                if (isAuto && autoType) setPlacedBeds(generateAutoLayout(roomWidth, roomLength, autoType));
+            }, [isAuto, autoType, roomWidth, roomLength]);
+
+            const handleAddBed = (typeKey) => {
+                setIsAuto(false); 
+                const newBed = { id: Date.now().toString(), type: typeKey, x: 0, y: 0 };
+                setPlacedBeds([...placedBeds, newBed]);
+            };
+
+            const handleClear = () => {
+                if(confirm(t.confirmClear)) { setPlacedBeds([]); setIsAuto(false); }
+            };
+
+            const onPointerDown = (e, id, x, y) => {
+                e.preventDefault(); e.stopPropagation();
+                if (isAuto) setIsAuto(false);
+                setDraggingId(id);
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                dragRef.current = { startX: clientX, startY: clientY, initialX: x, initialY: y };
+            };
+
+            const onPointerMove = (e) => {
+                if (!draggingId) return;
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                const dx = (clientX - dragRef.current.startX) / scale;
+                const dy = (clientY - dragRef.current.startY) / scale;
+                
+                let newX = dragRef.current.initialX + dx;
+                let newY = dragRef.current.initialY + dy;
+
+                const bedType = BED_TYPES[placedBeds.find(b => b.id === draggingId).type];
+                const maxPxX = (roomWidth * PIXELS_PER_METER) - (bedType.w * PIXELS_PER_METER);
+                const maxPxY = (roomLength * PIXELS_PER_METER) - (bedType.h * PIXELS_PER_METER);
+                const snapPx = PIXELS_PER_METER / 10; 
+                newX = Math.round(newX / snapPx) * snapPx;
+                newY = Math.round(newY / snapPx) * snapPx;
+
+                if (newX < 0) newX = 0; if (newY < 0) newY = 0;
+                if (newX > maxPxX) newX = maxPxX; if (newY > maxPxY) newY = maxPxY;
+
+                setPlacedBeds(beds => beds.map(b => b.id === draggingId ? { ...b, x: newX, y: newY } : b));
+            };
+
+            const onPointerUp = () => setDraggingId(null);
+
+            useEffect(() => {
+                if (draggingId) {
+                    window.addEventListener('mousemove', onPointerMove);
+                    window.addEventListener('mouseup', onPointerUp);
+                    window.addEventListener('touchmove', onPointerMove, { passive: false });
+                    window.addEventListener('touchend', onPointerUp);
+                } else {
+                    window.removeEventListener('mousemove', onPointerMove);
+                    window.removeEventListener('mouseup', onPointerUp);
+                    window.removeEventListener('touchmove', onPointerMove);
+                    window.removeEventListener('touchend', onPointerUp);
+                }
+                return () => {
+                    window.removeEventListener('mousemove', onPointerMove);
+                    window.removeEventListener('mouseup', onPointerUp);
+                    window.removeEventListener('touchmove', onPointerMove);
+                    window.removeEventListener('touchend', onPointerUp);
+                };
+            }, [draggingId, scale]);
+
+            useEffect(() => {
+                if (!isAuto) {
+                    setPlacedBeds(beds => beds.filter(b => {
+                        const type = BED_TYPES[b.type];
+                        const maxPxX = (roomWidth * PIXELS_PER_METER) - (type.w * PIXELS_PER_METER);
+                        const maxPxY = (roomLength * PIXELS_PER_METER) - (type.h * PIXELS_PER_METER);
+                        return b.x <= maxPxX && b.y <= maxPxY;
+                    }));
+                }
+            }, [roomWidth, roomLength, isAuto]);
+
+            return (
+                <div className="min-h-[100dvh] bg-slate-50 text-slate-800 font-sans flex flex-col md:flex-row overflow-hidden selection:bg-blue-200">
+                    <div className="w-full md:w-80 lg:w-96 bg-white border-b md:border-r border-slate-200 shadow-lg z-20 flex flex-col overflow-y-auto max-h-[50dvh] md:max-h-screen">
+                        <div className="p-4 md:p-6 pb-0 flex-none">
+                            <div className="flex justify-between items-start mb-4 md:mb-6">
+                                <div>
+                                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M4 5v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2Z"/><path d="M4 10h16"/><path d="M4 15h16"/></svg>
+                                        COSMONDE
+                                    </h1>
+                                    <p className="text-[10px] md:text-xs text-slate-500 font-medium uppercase tracking-widest">{t.title}</p>
+                                </div>
+                                <div className="flex bg-slate-100 rounded p-1 border border-slate-200">
+                                    {['th', 'en', 'jp'].map(lng => (
+                                        <button key={lng} onClick={() => setLang(lng)} className={`text-[10px] md:text-xs px-2 py-1 rounded font-bold transition-colors uppercase ${lang === lng ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{lng}</button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6 pt-0 space-y-6">
+                            <div>
+                                <h2 className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide border-b pb-1">{t.s1}</h2>
+                                <div className="flex bg-slate-100 p-1 rounded-md mb-3 border border-slate-200">
+                                    <button className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${inputMode === 'DIMS' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => handleInputModeChange('DIMS')}>{t.inputTypeDims}</button>
+                                    <button className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${inputMode === 'AREA' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => handleInputModeChange('AREA')}>{t.inputTypeArea}</button>
+                                </div>
+                                {inputMode === 'DIMS' ? (
+                                    <div className="flex gap-3">
+                                        <div className="flex-1"><label className="block text-[10px] md:text-xs text-slate-500 mb-1">{t.w}</label><input type="number" value={roomWidth} onChange={(e) => handleWidthChange(e.target.value)} className="w-full bg-slate-50 border border-slate-300 rounded-md py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"/></div>
+                                        <div className="flex-1"><label className="block text-[10px] md:text-xs text-slate-500 mb-1">{t.l}</label><input type="number" value={roomLength} onChange={(e) => handleLengthChange(e.target.value)} className="w-full bg-slate-50 border border-slate-300 rounded-md py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"/></div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-[10px] md:text-xs text-slate-500 mb-1">{t.areaInput}</label>
+                                        <input type="number" value={roomArea} onChange={(e) => handleAreaChange(e.target.value)} className="w-full bg-slate-50 border border-slate-300 rounded-md py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"/>
+                                        <p className="text-[9px] md:text-[10px] text-orange-500 mt-1.5 font-medium">{t.areaHelp}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <h2 className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide border-b pb-1">{t.s2}</h2>
+                                <div className="flex bg-slate-100 p-1 rounded-md mb-3 border border-slate-200">
+                                    <button className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${isAuto ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => { setIsAuto(true); if(!autoType) setAutoType('FRONT'); }}>{t.modeAuto}</button>
+                                    <button className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${!isAuto ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setIsAuto(false)}>{t.modeManual}</button>
+                                </div>
+                                {isAuto ? (
+                                    <div className="space-y-2 bg-blue-50 p-2.5 rounded-lg border border-blue-100">
+                                        <p className="text-[10px] md:text-xs text-blue-700 font-medium mb-1">{t.selectAuto}</p>
+                                        <button onClick={() => setAutoType('FRONT')} className={`w-full text-left p-2 rounded border transition-colors ${autoType === 'FRONT' ? 'bg-blue-600 text-white border-blue-700 shadow-md' : 'bg-white text-slate-700 border-slate-300 hover:border-blue-400'}`}><span className="block font-bold text-xs md:text-sm">{t.frontLabel}</span><span className={`block text-[10px] md:text-xs mt-0.5 ${autoType === 'FRONT' ? 'text-blue-200' : 'text-slate-500'}`}>{t.frontDesc}</span></button>
+                                        <button onClick={() => setAutoType('SIDE')} className={`w-full text-left p-2 rounded border transition-colors ${autoType === 'SIDE' ? 'bg-teal-600 text-white border-teal-700 shadow-md' : 'bg-white text-slate-700 border-slate-300 hover:border-teal-400'}`}><span className="block font-bold text-xs md:text-sm">{t.sideLabel}</span><span className={`block text-[10px] md:text-xs mt-0.5 ${autoType === 'SIDE' ? 'text-teal-200' : 'text-slate-500'}`}>{t.sideDesc}</span></button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] md:text-xs text-slate-500 font-medium mb-1">{t.addBed}</p>
+                                        <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
+                                            <button onClick={() => handleAddBed('FRONT')} className="w-full bg-white hover:bg-blue-50 border border-slate-300 hover:border-blue-300 text-slate-700 rounded-md py-2 px-3 flex flex-col md:flex-row md:items-center md:justify-between transition-colors group">
+                                                <div className="text-left mb-1 md:mb-0"><span className="block font-semibold text-xs md:text-sm group-hover:text-blue-700">{t.frontLabel}</span><span className="block text-[10px] text-slate-500">{t.frontDesc}</span></div>
+                                                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold md:self-auto self-start">+</span>
+                                            </button>
+                                            <button onClick={() => handleAddBed('SIDE')} className="w-full bg-white hover:bg-teal-50 border border-slate-300 hover:border-teal-300 text-slate-700 rounded-md py-2 px-3 flex flex-col md:flex-row md:items-center md:justify-between transition-colors group">
+                                                <div className="text-left mb-1 md:mb-0"><span className="block font-semibold text-xs md:text-sm group-hover:text-teal-700">{t.sideLabel}</span><span className="block text-[10px] text-slate-500">{t.sideDesc}</span></div>
+                                                <span className="bg-teal-100 text-teal-700 px-2 py-1 rounded text-[10px] font-bold md:self-auto self-start">+</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="bg-slate-100 p-3 md:p-4 rounded-xl border border-slate-200 mt-auto">
+                                <h3 className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2 text-center">{t.summary}</h3>
+                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                    <div className="bg-white p-2 md:p-3 rounded-lg text-center shadow-sm"><span className="block text-[9px] md:text-[10px] text-slate-500">{t.totalArea}</span><span className="block text-sm md:text-lg font-bold text-slate-800">{currentTotalArea.toFixed(1)} <span className="text-[9px] font-normal">{t.sqm}</span></span></div>
+                                    <div className="bg-white p-2 md:p-3 rounded-lg text-center shadow-sm"><span className="block text-[9px] md:text-[10px] text-slate-500">{t.estimate}</span><span className="block text-sm md:text-lg font-bold text-slate-600">~{estimatedMax} <span className="text-[9px] font-normal">{t.beds}</span></span></div>
+                                </div>
+                                <div className="bg-slate-800 text-white p-2 md:p-4 rounded-lg text-center shadow-md relative overflow-hidden flex flex-row md:flex-col items-center justify-between md:justify-center">
+                                    <span className="block text-[10px] md:text-sm text-slate-300 md:mb-1">{t.placed}</span>
+                                    <span className="block text-xl md:text-3xl font-black text-blue-400">{currentBeds} <span className="text-[10px] md:text-sm font-normal text-white ml-1">{t.capsules}</span></span>
+                                </div>
+                                <button onClick={handleClear} className="w-full mt-2 py-1.5 md:py-2 text-[10px] md:text-xs text-slate-400 hover:text-red-500 font-medium transition-colors border border-transparent hover:border-red-200 rounded">{t.clear}</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div ref={containerRef} className="flex-1 bg-slate-200/50 p-2 md:p-8 overflow-hidden flex items-center justify-center relative touch-none" style={{ touchAction: 'none' }}>
+                        <div style={{ transform: `scale(${scale})`, transformOrigin: 'center center', transition: draggingId ? 'none' : 'transform 0.3s ease-out' }}>
+                            <div ref={roomRef} className="relative bg-white shadow-2xl ring-4 ring-white/50" style={{ width: `${roomWidth * PIXELS_PER_METER}px`, height: `${roomLength * PIXELS_PER_METER}px`, backgroundImage: `linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)`, backgroundSize: `${PIXELS_PER_METER}px ${PIXELS_PER_METER}px`, border: '2px solid #94a3b8' }}>
+                                <div className="absolute -top-6 md:-top-8 left-1/2 -translate-x-1/2 text-xs md:text-sm font-bold text-slate-500 tracking-widest whitespace-nowrap bg-white/80 px-2 rounded">{roomWidth}m</div>
+                                <div className="absolute top-1/2 -left-8 md:-left-10 -translate-y-1/2 text-xs md:text-sm font-bold text-slate-500 tracking-widest -rotate-90 whitespace-nowrap bg-white/80 px-2 rounded">{roomLength}m</div>
+
+                                {placedBeds.map(bed => {
+                                    const type = BED_TYPES[bed.type];
+                                    const isSelected = draggingId === bed.id;
+                                    return (
+                                        <div key={bed.id} onPointerDown={(e) => onPointerDown(e, bed.id, bed.x, bed.y)} className={`absolute rounded-sm shadow-md flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none text-white transition-shadow ${type.color} ${isSelected ? 'ring-4 ring-yellow-400 z-50 shadow-2xl opacity-90' : 'ring-1 ring-black/20 z-10 hover:shadow-xl'}`} style={{ width: `${type.w * PIXELS_PER_METER}px`, height: `${type.h * PIXELS_PER_METER}px`, left: `${bed.x}px`, top: `${bed.y}px`, touchAction: 'none' }}>
+                                            <div className={`w-1/2 h-2 bg-white/30 rounded-full mb-1 ${type.type === 'FRONT' ? 'mt-1' : 'ml-1 self-start mt-auto mb-auto transform -rotate-90'}`}></div>
+                                            <div className="font-bold text-[10px] sm:text-xs tracking-wider opacity-90">x2</div>
+                                            {!isSelected && !isAuto && (
+                                                <button onClick={(e) => { e.stopPropagation(); setPlacedBeds(beds => beds.filter(b => b.id !== bed.id)); }} className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-sm transform md:scale-0 md:group-hover:scale-100 transition-transform opacity-90 md:opacity-0 md:hover:opacity-100 focus:opacity-100">×</button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+
+                                {placedBeds.length === 0 ? (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <span className="text-slate-400 font-medium text-[10px] md:text-sm flex items-center gap-1.5 md:gap-2 bg-white/90 px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow-sm text-center">
+                                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+                                            {t.helpManual}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    isAuto && (
+                                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
+                                            <span className="text-blue-600 font-medium text-[8px] md:text-xs flex items-center gap-1.5 md:gap-2 bg-blue-50/90 px-2 py-1 md:px-3 md:py-1.5 rounded-full shadow border border-blue-100 whitespace-nowrap">
+                                                <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                                {t.helpAuto}
+                                            </span>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
