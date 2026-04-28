@@ -115,7 +115,6 @@
                 }
             };
 
-            // อัปเดตระบบ Auto-Layout: หักลบพื้นที่ 1 เมตรสำหรับทางเข้าห้อง
             const generateAutoLayout = (w, l, typeKey) => {
                 const type = BED_TYPES[typeKey];
                 const bw = type.w;
@@ -123,10 +122,9 @@
                 const beds = [];
                 let count = 0;
                 const walkway = 1.2; 
-                const entranceClearance = 1.0; // ระยะเผื่อทางเข้าห้อง 1 เมตรด้านล่าง
+                const entranceClearance = 1.0; 
 
                 let currentY = 0.2; 
-                // เช็คให้ความยาวไม่เกินพื้นที่ที่หักระยะทางเข้า 1 เมตรออกไปแล้ว
                 while (currentY + bh <= (l - entranceClearance)) {
                     let isDoubleRow = (currentY + bh * 2 <= (l - entranceClearance));
                     let currentX = 0.2;
@@ -234,26 +232,47 @@
 
             const onPointerUp = () => setDraggingId(null);
 
+            // -------------------------------------------------------------
+            // แกับักเรื่องการลากแล้วไม่ยอมปล่อย ด้วยการใช้ useRef เพื่อให้ได้ 
+            // ฟังก์ชันล่าสุดเสมอ โดยไม่โดนตัดทิ้งระหว่างรอบ Re-render
+            // -------------------------------------------------------------
+            const handlePointerMoveRef = useRef();
+            const handlePointerUpRef = useRef();
+
+            useLayoutEffect(() => {
+                handlePointerMoveRef.current = onPointerMove;
+                handlePointerUpRef.current = onPointerUp;
+            });
+
             useEffect(() => {
+                const onMove = (e) => handlePointerMoveRef.current && handlePointerMoveRef.current(e);
+                const onUp = (e) => handlePointerUpRef.current && handlePointerUpRef.current(e);
+
                 if (draggingId) {
-                    window.addEventListener('mousemove', onPointerMove);
-                    window.addEventListener('mouseup', onPointerUp);
-                    window.addEventListener('touchmove', onPointerMove, { passive: false });
-                    window.addEventListener('touchend', onPointerUp);
-                } else {
-                    window.removeEventListener('mousemove', onPointerMove);
-                    window.removeEventListener('mouseup', onPointerUp);
-                    window.removeEventListener('touchmove', onPointerMove);
-                    window.removeEventListener('touchmove', onPointerMove, { passive: false });
-                    window.removeEventListener('touchend', onPointerUp);
-                }
+                    // การดักจับ Event แบบครอบคลุมทั้ง Mouse และ Touch
+                    window.addEventListener('pointermove', onMove, { passive: false });
+                    window.addEventListener('pointerup', onUp);
+                    window.addEventListener('pointercancel', onUp);
+                    
+                    // ตัวเผื่อเหนียวสำหรับ iOS Safari รุ่นเก่า
+                    window.addEventListener('touchmove', onMove, { passive: false });
+                    window.addEventListener('touchend', onUp);
+                    window.addEventListener('mousemove', onMove, { passive: false });
+                    window.addEventListener('mouseup', onUp);
+                } 
+                
                 return () => {
-                    window.removeEventListener('mousemove', onPointerMove);
-                    window.removeEventListener('mouseup', onPointerUp);
-                    window.removeEventListener('touchmove', onPointerMove);
-                    window.removeEventListener('touchend', onPointerUp);
+                    window.removeEventListener('pointermove', onMove);
+                    window.removeEventListener('pointerup', onUp);
+                    window.removeEventListener('pointercancel', onUp);
+                    
+                    window.removeEventListener('touchmove', onMove);
+                    window.removeEventListener('touchend', onUp);
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp);
                 };
-            }, [draggingId, scale]);
+            }, [draggingId]); 
+            // -------------------------------------------------------------
 
             useEffect(() => {
                 if (!isAuto) {
@@ -382,7 +401,6 @@
                                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-slate-500 tracking-widest whitespace-nowrap bg-white/80 px-2 rounded border border-slate-200">{roomWidth}m</div>
                                     <div className="absolute top-1/2 -left-6 -translate-y-1/2 text-[10px] md:text-xs font-bold text-slate-500 tracking-widest -rotate-90 whitespace-nowrap bg-white/80 px-2 rounded border border-slate-200">{roomLength}m</div>
 
-                                    {/* พื้นที่ทางเข้าห้อง (Entrance Clearance Zone) โชว์เมื่ออยู่โหมด Auto */}
                                     {isAuto && (
                                         <div 
                                             className="absolute bottom-0 left-0 w-full bg-emerald-500/10 border-t-2 border-dashed border-emerald-500/40 flex items-center justify-center pointer-events-none z-0" 
