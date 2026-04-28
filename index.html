@@ -4,19 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>COSMONDE Space Planner</title>
-    <!-- โหลด Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- โหลด React -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- โหลด Babel สำหรับคอมไพล์ JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
-        /* ลบ touch-action: none ออกจาก body เพื่อให้สามารถปัดเลื่อนจอได้เวลาซูม */
         body { margin: 0; padding: 0; overflow: hidden; background-color: #f8fafc; }
-        
-        /* Custom Scrollbar สำหรับความสวยงาม */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -39,13 +33,13 @@
 
         const DICT = {
             th: {
-                title: 'โปรแกรมจำลองพื้นที่', s1: '1. ขนาดพื้นที่ (Area Size)', inputTypeDims: 'กว้าง x ยาว', inputTypeArea: 'ขนาดพื้นที่ (ตร.ม.)', w: 'ความกว้าง (W) / m', l: 'ความยาว (L) / m', areaInput: 'พื้นที่รวม (sq.m)', areaHelp: '* ระบบจำลองห้องในสัดส่วนสี่เหลี่ยมจัตุรัส', s2: '2. โหมดการจัดวาง', modeAuto: 'อัตโนมัติ (Auto)', modeManual: 'วางเอง (Manual)', selectAuto: 'เลือกรุ่นเพื่อจัดวางอัตโนมัติ', addBed: 'กดเพื่อเพิ่มลงในแปลน', summary: 'สรุปการจัดพื้นที่', totalArea: 'พื้นที่รวม', sqm: 'ตร.ม.', estimate: 'ประเมินสูงสุด', beds: 'เตียง', placed: 'จำนวนในแปลน', capsules: 'แคปซูล', clear: 'ล้างพื้นที่ทั้งหมด', helpAuto: 'ระบบกำลังจัดวางให้อัตโนมัติ (ลากเตียงเพื่อสลับเป็นโหมดวางเอง)', helpManual: 'เลือกรุ่นแคปซูลด้านซ้าย แล้วลากจัดวางได้เลย', frontLabel: 'Front Entry (เข้าด้านหน้า)', sideLabel: 'Side Entry (เข้าด้านข้าง)', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'ต้องการล้างแคปซูลทั้งหมดในห้องใช่หรือไม่?'
+                title: 'โปรแกรมจำลองพื้นที่', s1: '1. ขนาดพื้นที่ (Area Size)', inputTypeDims: 'กว้าง x ยาว', inputTypeArea: 'ขนาดพื้นที่ (ตร.ม.)', w: 'ความกว้าง (W) / m', l: 'ความยาว (L) / m', areaInput: 'พื้นที่รวม (sq.m)', areaHelp: '* ระบบจำลองห้องในสัดส่วนสี่เหลี่ยมจัตุรัส', s2: '2. โหมดการจัดวาง', modeAuto: 'อัตโนมัติ (Auto)', modeManual: 'วางเอง (Manual)', selectAuto: 'เลือกรุ่นเพื่อจัดวางอัตโนมัติ', addBed: 'กดเพื่อเพิ่มลงในแปลน', summary: 'สรุปการจัดพื้นที่', totalArea: 'พื้นที่รวม', sqm: 'ตร.ม.', estimate: 'ประเมินสูงสุด', beds: 'เตียง', placed: 'จำนวนในแปลน', capsules: 'แคปซูล', clear: 'ล้างพื้นที่ทั้งหมด', helpAuto: 'ระบบจัดวางแบบเว้นทางเข้า 1m (แตะเพื่อสลับเป็นโหมดวางเอง)', helpManual: 'แตะที่แคปซูลเพื่อหมุนหรือลบ / ลากเพื่อจัดวาง', frontLabel: 'Front Entry (เข้าด้านหน้า)', sideLabel: 'Side Entry (เข้าด้านข้าง)', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'ต้องการล้างแคปซูลทั้งหมดในห้องใช่หรือไม่?', clearanceZone: 'พื้นที่หน้าประตูทางเข้า (1m Clearance)'
             },
             en: {
-                title: 'Space Planner Tool', s1: '1. Room Size', inputTypeDims: 'Width x Length', inputTypeArea: 'Total Area (sq.m)', w: 'Width (W) / m', l: 'Length (L) / m', areaInput: 'Total Area (sq.m)', areaHelp: '* Simulated as a square layout', s2: '2. Layout Mode', modeAuto: 'Auto Fill', modeManual: 'Manual', selectAuto: 'Select a type to auto-fill', addBed: 'Click to add to plan', summary: 'Summary Report', totalArea: 'Total Area', sqm: 'sq.m', estimate: 'Max Estimate', beds: 'beds', placed: 'Placed in Plan', capsules: 'capsules', clear: 'Clear All', helpAuto: 'Auto-layout active (Drag any bed to switch to manual mode)', helpManual: 'Select a capsule type and drag to arrange', frontLabel: 'Front Entry', sideLabel: 'Side Entry', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'Clear all capsules from the room?'
+                title: 'Space Planner Tool', s1: '1. Room Size', inputTypeDims: 'Width x Length', inputTypeArea: 'Total Area (sq.m)', w: 'Width (W) / m', l: 'Length (L) / m', areaInput: 'Total Area (sq.m)', areaHelp: '* Simulated as a square layout', s2: '2. Layout Mode', modeAuto: 'Auto Fill', modeManual: 'Manual', selectAuto: 'Select a type to auto-fill', addBed: 'Click to add to plan', summary: 'Summary Report', totalArea: 'Total Area', sqm: 'sq.m', estimate: 'Max Estimate', beds: 'beds', placed: 'Placed in Plan', capsules: 'capsules', clear: 'Clear All', helpAuto: 'Auto layout with 1m entrance clearance (Drag to switch to manual)', helpManual: 'Tap a capsule to rotate/delete or drag to move', frontLabel: 'Front Entry', sideLabel: 'Side Entry', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'Clear all capsules from the room?', clearanceZone: 'ENTRANCE CLEARANCE (1m)'
             },
             jp: {
-                title: 'スペースシミュレーター', s1: '1. 部屋のサイズ', inputTypeDims: '幅 × 長さ', inputTypeArea: '面積 (㎡)', w: '幅 (W) / m', l: '長さ (L) / m', areaInput: '合計面積 (㎡)', areaHelp: '* 正方形のレイアウトとしてシミュレーション', s2: '2. レイアウトモード', modeAuto: '自動 (Auto)', modeManual: '手動 (Manual)', selectAuto: 'タイプを選択して自動配置', addBed: 'クリックしてプランに追加', summary: '概要レポート', totalArea: '合計面積', sqm: '㎡', estimate: '最大推定', beds: 'ベッド', placed: '配置済み', capsules: 'カプセル', clear: 'すべてクリア', helpAuto: '自動配置中 (ベッドを動かすと手動モードになります)', helpManual: '左から選んでドラッグしてください', frontLabel: 'フロントエントリー (前入り)', sideLabel: 'サイドエントリー (横入り)', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'すべてのカプセルをクリアしますか？'
+                title: 'スペースシミュレーター', s1: '1. 部屋のサイズ', inputTypeDims: '幅 × 長さ', inputTypeArea: '面積 (㎡)', w: '幅 (W) / m', l: '長さ (L) / m', areaInput: '合計面積 (㎡)', areaHelp: '* 正方形のレイアウトとしてシミュレーション', s2: '2. レイアウトモード', modeAuto: '自動 (Auto)', modeManual: '手動 (Manual)', selectAuto: 'タイプを選択して自動配置', addBed: 'クリックしてプランに追加', summary: '概要レポート', totalArea: '合計面積', sqm: '㎡', estimate: '最大推定', beds: 'ベッド', placed: '配置済み', capsules: 'カプセル', clear: 'すべてクリア', helpAuto: 'エントランス空間1m確保済（ドラッグで手動モードへ）', helpManual: 'カプセルをタップして回転/削除、ドラッグで移動', frontLabel: 'フロントエントリー (前入り)', sideLabel: 'サイドエントリー (横入り)', frontDesc: '1.1m x 2.2m', sideDesc: '2.2m x 1.1m', confirmClear: 'すべてのカプセルをクリアしますか？', clearanceZone: 'エントランス空間 (1m Clearance)'
             }
         };
 
@@ -62,6 +56,7 @@
             const [autoType, setAutoType] = useState('FRONT');
 
             const [draggingId, setDraggingId] = useState(null);
+            const [selectedId, setSelectedId] = useState(null); 
             const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
             const roomRef = useRef(null);
             
@@ -72,7 +67,6 @@
             const estimatedMax = Math.floor(currentTotalArea / 2);
             const currentBeds = placedBeds.reduce((sum, bed) => sum + BED_TYPES[bed.type].beds, 0);
 
-            // ฟังก์ชันคำนวณและปรับขนาดให้พอดีจออัตโนมัติ
             const calculateScale = () => {
                 if (!containerRef.current) return;
                 const containerRect = containerRef.current.getBoundingClientRect();
@@ -83,15 +77,12 @@
                 
                 const scaleX = availableWidth / requiredWidth;
                 const scaleY = availableHeight / requiredHeight;
-                
-                // แก้ไข: ให้ขยายได้สูงสุดถึง 3 เท่า หากเปิดบน Laptop ที่หน้าจอใหญ่
                 const newScale = Math.min(scaleX, scaleY, 3);
                 setScale(Math.max(0.1, newScale * 0.95)); 
             };
 
-            // ฟังก์ชันซูมเข้า/ออก (ควบคุมด้วยปุ่ม + / -)
-            const handleZoomIn = () => setScale(prev => Math.min(prev * 1.25, 4)); // ซูมสูงสุด 4x
-            const handleZoomOut = () => setScale(prev => Math.max(prev * 0.8, 0.2)); // ย่อเล็กสุด 0.2x
+            const handleZoomIn = () => setScale(prev => Math.min(prev * 1.25, 4));
+            const handleZoomOut = () => setScale(prev => Math.max(prev * 0.8, 0.2));
 
             useLayoutEffect(() => {
                 calculateScale();
@@ -124,33 +115,31 @@
                 }
             };
 
+            // อัปเดตระบบ Auto-Layout: หักลบพื้นที่ 1 เมตรสำหรับทางเข้าห้อง
             const generateAutoLayout = (w, l, typeKey) => {
                 const type = BED_TYPES[typeKey];
                 const bw = type.w;
                 const bh = type.h;
                 const beds = [];
                 let count = 0;
+                const walkway = 1.2; 
+                const entranceClearance = 1.0; // ระยะเผื่อทางเข้าห้อง 1 เมตรด้านล่าง
 
-                if (typeKey === 'FRONT') {
-                    let currentY = 0.2; 
-                    while (currentY + bh <= l) {
-                        let currentX = 0.2;
-                        while (currentX + bw <= w) {
-                            beds.push({ id: `auto-${count++}`, type: typeKey, x: currentX * PIXELS_PER_METER, y: currentY * PIXELS_PER_METER });
-                            currentX += bw;
-                        }
-                        currentY += bh + 1.2; 
-                    }
-                } else {
+                let currentY = 0.2; 
+                // เช็คให้ความยาวไม่เกินพื้นที่ที่หักระยะทางเข้า 1 เมตรออกไปแล้ว
+                while (currentY + bh <= (l - entranceClearance)) {
+                    let isDoubleRow = (currentY + bh * 2 <= (l - entranceClearance));
                     let currentX = 0.2;
                     while (currentX + bw <= w) {
-                        let currentY = 0.2;
-                        while (currentY + bh <= l) {
-                            beds.push({ id: `auto-${count++}`, type: typeKey, x: currentX * PIXELS_PER_METER, y: currentY * PIXELS_PER_METER });
-                            currentY += bh;
+                        if (isDoubleRow) {
+                            beds.push({ id: `auto-${count++}`, type: typeKey, x: currentX * PIXELS_PER_METER, y: currentY * PIXELS_PER_METER, angle: 180 });
+                            beds.push({ id: `auto-${count++}`, type: typeKey, x: currentX * PIXELS_PER_METER, y: (currentY + bh) * PIXELS_PER_METER, angle: 0 });
+                        } else {
+                            beds.push({ id: `auto-${count++}`, type: typeKey, x: currentX * PIXELS_PER_METER, y: currentY * PIXELS_PER_METER, angle: 0 });
                         }
-                        currentX += bw + 1.2;
+                        currentX += bw;
                     }
+                    currentY += isDoubleRow ? (bh * 2 + walkway) : (bh + walkway);
                 }
                 return beds;
             };
@@ -161,18 +150,47 @@
 
             const handleAddBed = (typeKey) => {
                 setIsAuto(false); 
-                const newBed = { id: Date.now().toString(), type: typeKey, x: 0, y: 0 };
+                const newBed = { id: Date.now().toString(), type: typeKey, x: 0, y: 0, angle: 0 };
                 setPlacedBeds([...placedBeds, newBed]);
+                setSelectedId(newBed.id);
             };
 
             const handleClear = () => {
-                if(confirm(t.confirmClear)) { setPlacedBeds([]); setIsAuto(false); }
+                if(confirm(t.confirmClear)) { setPlacedBeds([]); setIsAuto(false); setSelectedId(null); }
+            };
+
+            const handleRotate = (id) => {
+                setIsAuto(false);
+                setPlacedBeds(beds => beds.map(b => {
+                    if (b.id !== id) return b;
+                    let newAngle = ((b.angle || 0) + 45) % 360;
+                    const type = BED_TYPES[b.type];
+                    const wPx = type.w * PIXELS_PER_METER;
+                    const hPx = type.h * PIXELS_PER_METER;
+                    const rad = newAngle * Math.PI / 180;
+                    
+                    const bbW = Math.abs(wPx * Math.cos(rad)) + Math.abs(hPx * Math.sin(rad));
+                    const bbH = Math.abs(wPx * Math.sin(rad)) + Math.abs(hPx * Math.cos(rad));
+                    
+                    const minX = bbW / 2 - wPx / 2;
+                    const maxX = (roomWidth * PIXELS_PER_METER) - bbW / 2 - wPx / 2;
+                    const minY = bbH / 2 - hPx / 2;
+                    const maxY = (roomLength * PIXELS_PER_METER) - bbH / 2 - hPx / 2;
+
+                    let newX = b.x; let newY = b.y;
+                    if (newX < minX) newX = minX; if (newX > maxX) newX = maxX;
+                    if (newY < minY) newY = minY; if (newY > maxY) newY = maxY;
+
+                    return { ...b, angle: newAngle, x: newX, y: newY };
+                }));
             };
 
             const onPointerDown = (e, id, x, y) => {
                 e.preventDefault(); e.stopPropagation();
                 if (isAuto) setIsAuto(false);
                 setDraggingId(id);
+                setSelectedId(id);
+                
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
                 dragRef.current = { startX: clientX, startY: clientY, initialX: x, initialY: y };
@@ -183,22 +201,33 @@
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
                 
-                // แปลงระยะการลากเมาส์ให้ตรงกับอัตราส่วน Scale
                 const dx = (clientX - dragRef.current.startX) / scale;
                 const dy = (clientY - dragRef.current.startY) / scale;
                 
                 let newX = dragRef.current.initialX + dx;
                 let newY = dragRef.current.initialY + dy;
 
-                const bedType = BED_TYPES[placedBeds.find(b => b.id === draggingId).type];
-                const maxPxX = (roomWidth * PIXELS_PER_METER) - (bedType.w * PIXELS_PER_METER);
-                const maxPxY = (roomLength * PIXELS_PER_METER) - (bedType.h * PIXELS_PER_METER);
+                const bed = placedBeds.find(b => b.id === draggingId);
+                const bedType = BED_TYPES[bed.type];
+                const angle = bed.angle || 0;
+                const wPx = bedType.w * PIXELS_PER_METER;
+                const hPx = bedType.h * PIXELS_PER_METER;
+                const rad = angle * Math.PI / 180;
+                
+                const bbW = Math.abs(wPx * Math.cos(rad)) + Math.abs(hPx * Math.sin(rad));
+                const bbH = Math.abs(wPx * Math.sin(rad)) + Math.abs(hPx * Math.cos(rad));
+                
+                const minX = bbW / 2 - wPx / 2;
+                const maxX = (roomWidth * PIXELS_PER_METER) - bbW / 2 - wPx / 2;
+                const minY = bbH / 2 - hPx / 2;
+                const maxY = (roomLength * PIXELS_PER_METER) - bbH / 2 - hPx / 2;
+
                 const snapPx = PIXELS_PER_METER / 10; 
                 newX = Math.round(newX / snapPx) * snapPx;
                 newY = Math.round(newY / snapPx) * snapPx;
 
-                if (newX < 0) newX = 0; if (newY < 0) newY = 0;
-                if (newX > maxPxX) newX = maxPxX; if (newY > maxPxY) newY = maxPxY;
+                if (newX < minX) newX = minX; if (newX > maxX) newX = maxX;
+                if (newY < minY) newY = minY; if (newY > maxY) newY = maxY;
 
                 setPlacedBeds(beds => beds.map(b => b.id === draggingId ? { ...b, x: newX, y: newY } : b));
             };
@@ -215,6 +244,7 @@
                     window.removeEventListener('mousemove', onPointerMove);
                     window.removeEventListener('mouseup', onPointerUp);
                     window.removeEventListener('touchmove', onPointerMove);
+                    window.removeEventListener('touchmove', onPointerMove, { passive: false });
                     window.removeEventListener('touchend', onPointerUp);
                 }
                 return () => {
@@ -229,9 +259,16 @@
                 if (!isAuto) {
                     setPlacedBeds(beds => beds.filter(b => {
                         const type = BED_TYPES[b.type];
-                        const maxPxX = (roomWidth * PIXELS_PER_METER) - (type.w * PIXELS_PER_METER);
-                        const maxPxY = (roomLength * PIXELS_PER_METER) - (type.h * PIXELS_PER_METER);
-                        return b.x <= maxPxX && b.y <= maxPxY;
+                        const wPx = type.w * PIXELS_PER_METER;
+                        const hPx = type.h * PIXELS_PER_METER;
+                        const rad = (b.angle || 0) * Math.PI / 180;
+                        const bbW = Math.abs(wPx * Math.cos(rad)) + Math.abs(hPx * Math.sin(rad));
+                        const bbH = Math.abs(wPx * Math.sin(rad)) + Math.abs(hPx * Math.cos(rad));
+                        const minX = bbW / 2 - wPx / 2;
+                        const maxX = (roomWidth * PIXELS_PER_METER) - bbW / 2 - wPx / 2;
+                        const minY = bbH / 2 - hPx / 2;
+                        const maxY = (roomLength * PIXELS_PER_METER) - bbH / 2 - hPx / 2;
+                        return b.x >= minX - 1 && b.x <= maxX + 1 && b.y >= minY - 1 && b.y <= maxY + 1;
                     }));
                 }
             }, [roomWidth, roomLength, isAuto]);
@@ -239,7 +276,6 @@
             return (
                 <div className="h-[100dvh] w-full bg-slate-50 text-slate-800 font-sans flex flex-col md:flex-row overflow-hidden selection:bg-blue-200">
                     
-                    {/* Sidebar แผงควบคุม (ด้านซ้ายบน Laptop / ด้านบนบน Mobile) */}
                     <div className="w-full md:w-80 lg:w-96 bg-white border-b md:border-r border-slate-200 shadow-lg z-20 flex flex-col overflow-y-auto max-h-[50dvh] md:max-h-screen">
                         <div className="p-4 md:p-6 pb-0 flex-none">
                             <div className="flex justify-between items-start mb-4 md:mb-6">
@@ -323,10 +359,8 @@
                         </div>
                     </div>
 
-                    {/* พื้นที่จำลองห้อง (Canvas Area) */}
                     <div ref={containerRef} className="flex-1 bg-slate-200/50 overflow-auto relative flex flex-col relative">
                         
-                        {/* แผงควบคุมการ Zoom ลอยอยู่มุมขวาล่าง */}
                         <div className="sticky left-full top-full right-4 bottom-4 w-max -mt-32 mr-4 z-50 flex flex-col shadow-lg rounded-lg border border-slate-200 overflow-hidden bg-white">
                             <button onClick={handleZoomIn} className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center hover:bg-slate-100 text-slate-700 border-b border-slate-100 transition-colors" title="Zoom In (+)">
                                 <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -339,57 +373,69 @@
                             </button>
                         </div>
 
-                        {/* กล่องจัดวางตำแหน่งห้องให้อยู่ตรงกลางเสมอ */}
-                        <div className="min-w-full min-h-full flex items-center justify-center p-4 md:p-8">
+                        <div className="min-w-full min-h-full flex items-center justify-center p-4 md:p-8" onPointerDown={() => setSelectedId(null)}>
                             
-                            {/* กรอบกำหนดความกว้าง-สูงของห้องที่ถูกซูม (เพื่อให้ Scrollbar ทำงานถูกต้อง) */}
-                            <div style={{ 
-                                width: `${roomWidth * PIXELS_PER_METER * scale}px`, 
-                                height: `${roomLength * PIXELS_PER_METER * scale}px`,
-                                transition: draggingId ? 'none' : 'all 0.2s ease-out'
-                            }}>
+                            <div style={{ width: `${roomWidth * PIXELS_PER_METER * scale}px`, height: `${roomLength * PIXELS_PER_METER * scale}px`, transition: draggingId ? 'none' : 'all 0.2s ease-out' }}>
                                 
-                                {/* ตัวห้อง (Room) */}
-                                <div ref={roomRef} className="relative bg-white shadow-2xl ring-4 ring-white/50" style={{ 
-                                    transform: `scale(${scale})`, 
-                                    transformOrigin: 'top left',
-                                    width: `${roomWidth * PIXELS_PER_METER}px`, 
-                                    height: `${roomLength * PIXELS_PER_METER}px`, 
-                                    backgroundImage: `linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)`, 
-                                    backgroundSize: `${PIXELS_PER_METER}px ${PIXELS_PER_METER}px`, 
-                                    border: '2px solid #94a3b8' 
-                                }}>
+                                <div ref={roomRef} className="relative bg-white shadow-2xl ring-4 ring-white/50" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: `${roomWidth * PIXELS_PER_METER}px`, height: `${roomLength * PIXELS_PER_METER}px`, backgroundImage: `linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)`, backgroundSize: `${PIXELS_PER_METER}px ${PIXELS_PER_METER}px`, border: '2px solid #94a3b8' }}>
                                     
-                                    {/* Room Labels */}
                                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-slate-500 tracking-widest whitespace-nowrap bg-white/80 px-2 rounded border border-slate-200">{roomWidth}m</div>
                                     <div className="absolute top-1/2 -left-6 -translate-y-1/2 text-[10px] md:text-xs font-bold text-slate-500 tracking-widest -rotate-90 whitespace-nowrap bg-white/80 px-2 rounded border border-slate-200">{roomLength}m</div>
 
-                                    {/* Draggable Beds */}
+                                    {/* พื้นที่ทางเข้าห้อง (Entrance Clearance Zone) โชว์เมื่ออยู่โหมด Auto */}
+                                    {isAuto && (
+                                        <div 
+                                            className="absolute bottom-0 left-0 w-full bg-emerald-500/10 border-t-2 border-dashed border-emerald-500/40 flex items-center justify-center pointer-events-none z-0" 
+                                            style={{ height: `${1.0 * PIXELS_PER_METER}px` }}
+                                        >
+                                            <span className="text-emerald-600/70 font-bold text-[8px] md:text-[10px] tracking-widest px-2 text-center">
+                                                {t.clearanceZone}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {placedBeds.map(bed => {
                                         const type = BED_TYPES[bed.type];
-                                        const isSelected = draggingId === bed.id;
+                                        const isSelected = selectedId === bed.id || draggingId === bed.id;
+                                        
                                         return (
-                                            <div key={bed.id} onPointerDown={(e) => onPointerDown(e, bed.id, bed.x, bed.y)} className={`absolute rounded-sm shadow-md flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none text-white transition-shadow ${type.color} ${isSelected ? 'ring-4 ring-yellow-400 z-50 shadow-2xl opacity-90' : 'ring-1 ring-black/20 z-10 hover:shadow-xl'}`} style={{ width: `${type.w * PIXELS_PER_METER}px`, height: `${type.h * PIXELS_PER_METER}px`, left: `${bed.x}px`, top: `${bed.y}px`, touchAction: 'none' }}>
-                                                <div className={`w-1/2 h-2 bg-white/30 rounded-full mb-1 ${type.type === 'FRONT' ? 'mt-1' : 'ml-1 self-start mt-auto mb-auto transform -rotate-90'}`}></div>
-                                                <div className="font-bold text-[10px] sm:text-xs tracking-wider opacity-90">x2</div>
-                                                {!isSelected && !isAuto && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setPlacedBeds(beds => beds.filter(b => b.id !== bed.id)); }} className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-sm transform md:scale-0 md:group-hover:scale-100 transition-transform opacity-90 md:opacity-0 md:hover:opacity-100 focus:opacity-100">×</button>
+                                            <div key={bed.id} onPointerDown={(e) => onPointerDown(e, bed.id, bed.x, bed.y)} className={`absolute rounded-sm shadow-md flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none text-white transition-shadow ${type.color} ${isSelected ? 'ring-4 ring-yellow-400 z-50 shadow-2xl opacity-100' : 'ring-1 ring-black/20 z-10 hover:shadow-xl opacity-90'}`} style={{ width: `${type.w * PIXELS_PER_METER}px`, height: `${type.h * PIXELS_PER_METER}px`, left: `${bed.x}px`, top: `${bed.y}px`, transform: `rotate(${bed.angle || 0}deg)`, touchAction: 'none' }}>
+                                                {type.id === 'front' ? (
+                                                    <div className="absolute top-2 w-1/2 h-3 bg-white/40 rounded-full"></div>
+                                                ) : (
+                                                    <div className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-1/2 bg-white/40 rounded-full"></div>
                                                 )}
+                                                
+                                                <div className="font-bold text-[10px] sm:text-xs tracking-wider opacity-90 z-10">x2</div>
+                                                
+                                                <div className="absolute bottom-0 w-full h-4 bg-black/30 flex items-center justify-center border-t border-white/40">
+                                                    <span className="text-[6px] md:text-[8px] text-white font-bold tracking-widest flex items-center gap-1">
+                                                        <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                                                        ENTRY
+                                                    </span>
+                                                </div>
+
+                                                <button onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); handleRotate(bed.id); }} className={`absolute -top-3 -left-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center shadow-lg transition-all duration-200 z-20 ${isSelected && !isAuto ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} title="หมุน 45 องศา">
+                                                    <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                                </button>
+                                                
+                                                <button onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); setPlacedBeds(beds => beds.filter(b => b.id !== bed.id)); }} className={`absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center shadow-lg transition-all duration-200 z-20 ${isSelected && !isAuto ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} title="ลบแคปซูล">
+                                                    <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </button>
                                             </div>
                                         );
                                     })}
 
-                                    {/* Help Text overlay */}
                                     {placedBeds.length === 0 ? (
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <span className="text-slate-400 font-medium text-[8px] md:text-[10px] lg:text-xs flex items-center gap-1.5 md:gap-2 bg-white/90 px-3 py-1.5 rounded-full shadow-sm text-center">
+                                            <span className="text-slate-400 font-medium text-[8px] md:text-[10px] lg:text-xs flex items-center gap-1.5 md:gap-2 bg-white/90 px-3 py-1.5 rounded-full shadow-sm text-center z-10">
                                                 <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
                                                 {t.helpManual}
                                             </span>
                                         </div>
                                     ) : (
                                         isAuto && (
-                                            <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
+                                            <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-10">
                                                 <span className="text-blue-600 font-medium text-[8px] md:text-[10px] flex items-center gap-1.5 bg-blue-50/90 px-2 py-1 md:px-3 md:py-1.5 rounded-full shadow border border-blue-100 whitespace-nowrap">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                                                     {t.helpAuto}
